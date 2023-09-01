@@ -17,12 +17,12 @@
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
         <!-- BASE CSS -->
-        <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
-        <link href="{{ asset('css/style.css') }}" rel="stylesheet">
-        <link href="{{ asset('css/vendors.css') }}" rel="stylesheet">
+        <link href="{{ mix('css/bootstrap.min.css') }}" rel="stylesheet">
+        <link href="{{ mix('css/style.css') }}" rel="stylesheet">
+        <link href="{{ mix('css/vendors.css') }}" rel="stylesheet">
 
         <!-- YOUR CUSTOM CSS -->
-        <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+        <link href="{{ mix('css/custom.css') }}" rel="stylesheet">
     </head>
 
     <body class="bg_color_gray">
@@ -43,7 +43,7 @@
                             <a data-bs-toggle="offcanvas" href="#offcanvasNav" role="button" class="btn_nav"><i class="bi bi-list"></i></a>
                         </div>
                         <div class="col-4 text-center">
-                            <a href="https://pbibins.com" target="_blank"><img src="{{ asset('img/PBIB Logo.png') }}" alt="" class="img-fluid" width="350" height="350"></a>
+                            <a href="https://pbibins.com" target="_blank"><img src="{{ mix('img/PBIB Logo.png') }}" alt="" class="img-fluid" width="350" height="350"></a>
                         </div>
                         <div class="col-4">
                             <div id="social">
@@ -320,11 +320,11 @@
     </body>
 
     <!-- COMMON SCRIPTS -->
-    <script src="{{ asset('js/common_scripts.min.js') }}"></script>
+    <script src="{{ mix('js/common_scripts.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <script src="{{ asset('js/common_functions.js') }}"></script>
-    <script src="{{ asset('assets/validate.js') }}"></script>
+    <script src="{{ mix('js/common_functions.js') }}"></script>
+    <script src="{{ mix('assets/validate.js') }}"></script>
 </html>
