@@ -1,12 +1,4 @@
 {
     "/js/app.js": "/js/app.js",
-    "/fonts/bootstrap-icons.css": "/fonts/bootstrap-icons.css",
-    "/fonts/bootstrap-icons.json": "/fonts/bootstrap-icons.json",
-    "/fonts/bootstrap-icons.woff": "/fonts/bootstrap-icons.woff",
-    "/fonts/bootstrap-icons.woff2": "/fonts/bootstrap-icons.woff2",
-    "/fonts/index.html": "/fonts/index.html",
-    "/fonts/smiles.eot": "/fonts/smiles.eot",
-    "/fonts/smiles.svg": "/fonts/smiles.svg",
-    "/fonts/smiles.ttf": "/fonts/smiles.ttf",
-    "/fonts/smiles.woff": "/fonts/smiles.woff"
+    "/css/app.css": "/css/app.css"
 }
