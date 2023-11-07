@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use App\Models\InsuranceNeeds;
-use App\Models\Trades;
-use Illuminate\Support\Facades\Log;
 use PDF;
 use File;
+use Carbon\Carbon;
+use App\Models\Trades;
+use App\Models\OptInList;
+use Illuminate\Http\Request;
+use App\Models\InsuranceNeeds;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class InsuranceNeedsController extends Controller
 {
@@ -36,54 +38,100 @@ class InsuranceNeedsController extends Controller
         Log::info('Data', $request->all());
 
         if ($request->isMethod('post')) {
-            $tradesPerformed = $request->input('trades_performed');
+            $allRequestData = $request->all(); // Get all request data
 
+            // Separate the data
+            $tradesPerformed = $request->input('trades_performed');
             $question1Data = json_decode($request->input('question_1'), true);
             $question2Data = json_decode($request->input('question_2'), true);
 
-            $insuranceNeeds = new InsuranceNeeds();
-            $insuranceNeeds->state_id = $request->input('business_location');
-            $insuranceNeeds->trades_id = json_encode($tradesPerformed); // Adjust as needed
-            $insuranceNeeds->company_name = $request->input('company_name');
-            $insuranceNeeds->firstname = $request->input('first_name');
-            $insuranceNeeds->lastname = $request->input('last_name');
-            $insuranceNeeds->address = $request->input('address');
-            $insuranceNeeds->city = $request->input('city');
-            $insuranceNeeds->zipcode = $request->input('zipcode');
-            $insuranceNeeds->email = $request->input('email');
-            $insuranceNeeds->phone_no = $request->input('phone_no');
+            try {
+                DB::transaction(function () use ($tradesPerformed, $question1Data, $question2Data, $allRequestData) {
 
-            $insuranceNeeds->does_perform_residential_work = $question1Data['q1'];
-            $insuranceNeeds->does_perform_commercial_work = $question1Data['q2'];
-            $insuranceNeeds->does_have_employee = $question1Data['q3'];
-            $insuranceNeeds->does_use_vehicle_in_work = $question1Data['q4'];
-            $insuranceNeeds->does_work_property_above_1m = $question1Data['q5'];
-            $insuranceNeeds->does_rent_equipment_or_add_up_10k = $question1Data['q6'];
-            $insuranceNeeds->does_rent_office_other_than_home = $question1Data['q7'];
+                    $insuranceNeeds = new InsuranceNeeds();
+                    $insuranceNeeds->state_id = $allRequestData['business_location'];
+                    $insuranceNeeds->trades_id = json_encode($tradesPerformed);
+                    $insuranceNeeds->company_name = $allRequestData['company_name'];
+                    $insuranceNeeds->firstname = $allRequestData['first_name'];
+                    $insuranceNeeds->lastname = $allRequestData['last_name'];
+                    $insuranceNeeds->address = $allRequestData['address'];
+                    $insuranceNeeds->city = $allRequestData['city'];
+                    $insuranceNeeds->zipcode = $allRequestData['zipcode'];
+                    $insuranceNeeds->email = $allRequestData['email'];
+                    $insuranceNeeds->phone_no = $allRequestData['phone_no'];
+                    $insuranceNeeds->does_perform_residential_work = $question1Data['q1'];
+                    $insuranceNeeds->does_perform_commercial_work = $question1Data['q2'];
+                    $insuranceNeeds->does_have_employee = $question1Data['q3'];
+                    $insuranceNeeds->does_use_vehicle_in_work = $question1Data['q4'];
+                    $insuranceNeeds->does_work_property_above_1m = $question1Data['q5'];
+                    $insuranceNeeds->does_rent_equipment_or_add_up_10k = $question1Data['q6'];
+                    $insuranceNeeds->does_rent_office_other_than_home = $question1Data['q7'];
 
-            $insuranceNeeds->are_you_gc_performs_remodeling = $question2Data['q1'];
-            $insuranceNeeds->does_transport_materials_above_10k = $question2Data['q2'];
-            $insuranceNeeds->does_perform_design_bldg_for_fee = $question2Data['q3'];
-            $insuranceNeeds->does_your_website_collect_personal_info = $question2Data['q4'];
-            $insuranceNeeds->does_store_transport_pollutants = $question2Data['q5'];
-            $insuranceNeeds->does_use_subcontractors = $question2Data['q6'];
+                    $insuranceNeeds->does_maintain_licenses = $question2Data['q1'];
+                    $insuranceNeeds->are_you_gc_performs_remodeling = $question2Data['q2'];
+                    $insuranceNeeds->does_transport_materials_above_10k = $question2Data['q3'];
+                    $insuranceNeeds->does_perform_design_bldg_for_fee = $question2Data['q4'];
+                    $insuranceNeeds->does_your_website_collect_personal_info = $question2Data['q5'];
+                    $insuranceNeeds->does_store_transport_pollutants = $question2Data['q6'];
+                    $insuranceNeeds->does_use_subcontractors = $question2Data['q7'];
+                    $doesInsuranceNeedsSaved = $insuranceNeeds->save();
 
-            $insuranceNeeds->save();
+                    if ($doesInsuranceNeedsSaved) {
 
-            $this->generatePdfReport($insuranceNeeds->id);
+                        DB::beginTransaction();
+                        try {
+                            $does_opt_in = null;
 
-            $templateData['firstname'] = $insuranceNeeds->firstname;
-            $date_created = Carbon::now();
-            $formattedDateCreated = $date_created->format("F j, Y g:ia");
-            $this->sendInsuranceNeedsEmail($insuranceNeeds->id, $insuranceNeeds->company_name, $templateData, $formattedDateCreated);
+                            if (isset($allRequestData['terms'])) {
+                                $does_opt_in = $allRequestData['terms'] === 'Yes' ? 1 : 0;
+                            }
 
-            session(['form_submitted' => true]);
+                            $utm_source = isset($allRequestData['utm_source']) ? $allRequestData['utm_source'] : null;
+                            $utm_medium = isset($allRequestData['utm_medium']) ? $allRequestData['utm_medium'] : null;
+                            $utm_campaign = isset($allRequestData['utm_campaign']) ? $allRequestData['utm_campaign'] : null;
+                            $utm_term = isset($allRequestData['utm_term']) ? $allRequestData['utm_term'] : null;
+                            $utm_content = isset($allRequestData['utm_content']) ? $allRequestData['utm_content'] : null;
 
+                            $utmParamQueries = OptInList::create([
+                                'info_id' => $insuranceNeeds->id,
+                                'does_opt_in' => $does_opt_in,
+                                'utm_source' => $utm_source,
+                                'utm_medium' => $utm_medium,
+                                'utm_campaign' => $utm_campaign,
+                                'utm_term' => $utm_term,
+                                'utm_content' => $utm_content,
+                            ]);
+
+
+                            Log::info('Successfully saved OPT IN record. Data: ' . json_encode($utmParamQueries));
+                            DB::commit();
+                        } catch (\Exception $e) {
+                            DB::rollBack();
+                            Log::error('Failed to insert UTM Param Queries. Error: ' . $e->getMessage());
+                        }
+
+                        $this->generatePdfReport($insuranceNeeds->id);
+                        $templateData['firstname'] = $insuranceNeeds->firstname;
+                        $templateData['email'] = $insuranceNeeds->email;
+                        $date_created = Carbon::now();
+                        $formattedDateCreated = $date_created->format("F j, Y g:ia");
+                        $this->sendInsuranceNeedsEmail($insuranceNeeds->id, $insuranceNeeds->company_name, $templateData, $formattedDateCreated);
+                    } else {
+                        Log::error('Doesnt saved insurance needs information');
+                    }
+
+                });
+                // session(['form_submitted' => true]);
+                $request->session()->put('form_submitted', true);
+                return response()->json(['status' => 'success', 'message' => 'Data has been saved successfully.']);
+            } catch (\Exception $e) {
+                return response()->json(['status' => 'error', 'message' => 'There was an error saving the data.', 'error' => $e->getMessage()], 500);
+                Log::error('Error in transaction: ' . $e->getMessage() . '. Stack trace: ' . $e->getTraceAsString());
+            }
         }
-        return response()->json(['status' => 'success', 'message' => 'Data has been saved successfully.']);
     }
 
-    function calculateQuestionsSection($pdf, $l=12, $title, $contents) {
+    function calculateQuestionsSection($pdf, $l, $title, $contents) {
 
         $currentY = $pdf->GetY();
         $topMargin = $pdf->getMargins()['top'];
@@ -155,7 +203,7 @@ class InsuranceNeedsController extends Controller
         }
     }
 
-    function calculateElSubconAgreement($pdf, $pageNo, $l=12, $title, $contents) {
+    function calculateElSubconAgreement($pdf, $pageNo, $l, $title, $contents) {
         $currentY = $pdf->GetY();
         $topMargin = $pdf->getMargins()['top'];
         $contentHeight = $currentY - $topMargin;
@@ -224,6 +272,9 @@ class InsuranceNeedsController extends Controller
         $insuranceNeedsInfo = InsuranceNeeds::select('*')->where('id', $id)->first();
         $fullname = $insuranceNeedsInfo['firstname'] . ' ' . $insuranceNeedsInfo['lastname'];
         $address = $insuranceNeedsInfo['address'] . ' ' . $insuranceNeedsInfo['city'] . ' ' . $insuranceNeedsInfo['state_id'] . ' ' . $insuranceNeedsInfo['zipcode'];
+        $dateCreated = $insuranceNeedsInfo['created_at'];
+        $date = Carbon::parse($dateCreated);
+        $formattedDate = $date->format('F j, Y');
         $trades_ids = json_decode($insuranceNeedsInfo->trades_id, true);
 
         $pdf = app('tcpdf');
@@ -240,7 +291,7 @@ class InsuranceNeedsController extends Controller
         $l = 12;
 
         $pdf->setXY($l, 35);
-        $pdf->Cell(0, 0, 'August 22, 2023', 0, 0, 'L', 0, 0, 0, false, '', '');
+        $pdf->Cell(0, 0, $formattedDate, 0, 0, 'L', 0, 0, 0, false, '', '');
 
         $pdf->setXY($l, 47);
         $pdf->Cell(0, 0, $fullname, 0, 0, 'L', 0, 0, 0, false, '', '');
@@ -731,7 +782,6 @@ class InsuranceNeedsController extends Controller
             $dynamicPageNo++;
         }
 
-
         if ($insuranceNeedsInfo->does_rent_equipment_or_add_up_10k != 0) {
             $contents =
                 [
@@ -775,6 +825,19 @@ class InsuranceNeedsController extends Controller
             $this->calculateElSubconAgreement($pdf, $dynamicPageNo, $l, $title='Cyber Liability Insurance', $contents);
             $dynamicPageNo++;
         }
+
+        $contents =
+            [
+                [
+                    'Limits of Liability' => [
+                        '$1,000,000 per Occurrence.',
+                        '$1,000,000 General Aggregate',
+                    ]
+                ],
+            ];
+
+        $this->calculateElSubconAgreement($pdf, $dynamicPageNo, $l, $title='Cyber Liability Insurance', $contents);
+        $dynamicPageNo++;
 
         // $contents =
         //     [
@@ -933,14 +996,17 @@ class InsuranceNeedsController extends Controller
                 "sender" => "PBIBINS Contractor Insurance Needs Survey Form <web@pbibinc.com>",
                 "subject" => "PBIBINS Contractor Insurance Needs Survey Form Details - {$formattedDateCreated}",
                 "attachments" => array(
-                    0 => array(
-                        "filename" => 'Insurance Needs Survey - ' . $companyName . '.pdf',
-                        "fileblob" => $base64,
-                        "mimetype" => "application/pdf"
-                    )
+                        0 => array(
+                            "filename" => 'Insurance Needs Survey - ' . $companyName . '.pdf',
+                            "fileblob" => $base64,
+                            "mimetype" => "application/pdf"
+                        )
                     ),
                 "to" => [
-                    "rj@pbibinc.com <rj@pbibinc.com>"
+                    "{$templateData['email']} <{$templateData['email']}>"
+                ],
+                "bcc" => [
+                    "insure@pbibinc.com"
                 ]
             ]),
             CURLOPT_HTTPHEADER => array(

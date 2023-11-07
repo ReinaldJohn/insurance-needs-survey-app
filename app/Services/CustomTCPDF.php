@@ -14,7 +14,7 @@ class CustomTCPDF extends TCPDF
 
         // Image on the right
         $image_file_right = public_path('img/getaquote400x90.png'); // Replace with the path to your right image
-        $this->Image($image_file_right, $this->getPageWidth() - 60, 10, 50, '', 'PNG', 'https://quote.pbibins.com', 'T', false, 300, '', false, false, 0, false, false, false);
+        $this->Image($image_file_right, $this->getPageWidth() - 60, 10, 50, '', 'PNG', 'https://quote.pbibins.com/?utm_source=InsuranceSurveyEmail&utm_medium=Pdf&utm_campaign=InsuranceSurveyEmail&utm_content=InsuranceSurveyPdf', 'T', false, 300, '', false, false, 0, false, false, false);
     }
 
     public function Footer() {

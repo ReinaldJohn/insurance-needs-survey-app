@@ -32,6 +32,7 @@ return new class extends Migration
             $table->boolean('does_work_property_above_1m');
             $table->boolean('does_rent_equipment_or_add_up_10k');
             $table->boolean('does_rent_office_other_than_home');
+            $table->boolean('does_maintain_licenses');
             $table->boolean('are_you_gc_performs_remodeling');
             $table->boolean('does_transport_materials_above_10k');
             $table->boolean('does_perform_design_bldg_for_fee');
