@@ -65,5 +65,7 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'check.forms.completed' => \App\Http\Middleware\CheckFormsCompleted::class,
         'reset.forms.completed' => \App\Http\Middleware\ResetFormsCompleted::class,
+        'check_api_key' => \App\Http\Middleware\CheckApiKey::class,
+        'restrict_by_ip' => \App\Http\Middleware\RestrictByIp::class,
     ];
 }

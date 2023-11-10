@@ -16,10 +16,13 @@ use App\Http\Controllers\Api\v1\ApiController;
 */
 
 Route::prefix('v1')->group(function () {
-    Route::apiResource('/information', ApiController::class)->parameters([
-        'information' => 'insuranceNeed'
+    Route::middleware(['check_api_key'])->group(function () {
+        Route::apiResource('/information', ApiController::class)->parameters([
+            'information' => 'insuranceNeed'
+        ]);
+    });
 
-    ]);
+    Route::get('/generate-api-key', [ApiController::class, 'storeApiKey'])->middleware('restrict_by_ip', 'throttle:1,1');
 });
 
 

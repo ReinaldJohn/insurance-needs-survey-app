@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Models\ApiKey;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\InsuranceNeeds;
 use App\Http\Controllers\Controller;
@@ -49,6 +51,14 @@ class ApiController extends Controller
     public function show(InsuranceNeeds $insuranceNeed)
     {
         return InsuranceSurveyResource::make($insuranceNeed);
+
+        if ($insuranceNeed) {
+            return InsuranceSurveyResource::make($insuranceNeed);
+        }
+
+        else {
+            return response()->json(['status' => 'error', 'message' => 'There was an error getting the data.'], 500);
+        }
     }
 
     /**
@@ -83,5 +93,18 @@ class ApiController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function storeApiKey()
+    {
+        // Set all existing keys to inactive
+        ApiKey::query()->update(['is_active' => false]);
+
+        // Generate a new API key
+        $apiKey = new ApiKey;
+        $apiKey->key = Str::random(60);
+        $apiKey->save();
+
+        return response()->json(['api_key' => $apiKey->key], 200);
     }
 }
