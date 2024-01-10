@@ -27,7 +27,21 @@ class InsuranceNeeds extends Model
 
     public function getProfessionById($id) {
         $profession = $this->select('tradename', 'gl_iso', 'description')->from('calculator_trades')->where('id', $id)->first();
-        return $profession ? $profession->name : null;
+        return $profession ? $profession->tradename : null;
     }
 
+    public function getUTMSStatus($id) {
+        $utms = $this->select('utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content')
+            ->from('opt_in')
+            ->where('info_id', $id)
+            ->first();
+
+        return $utms ? [
+            'utm_source' => $utms->utm_source,
+            'utm_medium' => $utms->utm_medium,
+            'utm_campaign' => $utms->utm_campaign,
+            'utm_term' => $utms->utm_term,
+            'utm_content' => $utms->utm_content,
+        ] : null;
+    }
 }

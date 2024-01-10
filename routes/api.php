@@ -20,9 +20,14 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('/information', ApiController::class)->parameters([
             'information' => 'insuranceNeed'
         ]);
+
+        Route::post('/information-by-phone', [ApiController::class, 'showByPhone']);
+        Route::post('/generate-pdf-report', [ApiController::class, 'generatePdfReport']);
+        Route::get('/get-generated-pdf/{id}', [ApiController::class, 'getGeneratedPdf']);
     });
 
-    Route::get('/generate-api-key', [ApiController::class, 'storeApiKey'])->middleware('restrict_by_ip', 'throttle:1,1');
+
+    Route::post('/generate-api-key', [ApiController::class, 'storeApiKey'])->middleware('restrict_by_ip', 'throttle:1,1');
 });
 
 

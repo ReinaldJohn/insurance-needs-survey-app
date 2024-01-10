@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class RestrictByIp
 {
-    protected $allowedIps = ['127.0.0.1', '58.69.124.93']; // Add your allowed IP(s) here
+    protected $allowedIps = ['127.0.0.1', '58.69.124.93', '87.249.138.103']; // Add your allowed IP(s) here
 
 
     /**
