@@ -320,7 +320,7 @@ class ApiController extends Controller
 
         // Process the validated data and generate the PDF report
         $id = $data['id'];
-        
+
         // $state_id = $data['state_id'];
         $trades_performed = $data['trades_performed'];
         $company = $data['company'];
