@@ -30,7 +30,7 @@ class InsuranceNeedsController extends Controller
     }
 
     public function emailTemplate() {
-        return view('insurance-survey.email-template');
+        return view('insurance-survey.new-email-template');
     }
 
     public function submitForm(Request $request) {
@@ -115,7 +115,8 @@ class InsuranceNeedsController extends Controller
                         $templateData['email'] = $insuranceNeeds->email;
                         $date_created = Carbon::now();
                         $formattedDateCreated = $date_created->format("F j, Y g:ia");
-                        $this->sendInsuranceNeedsEmail($insuranceNeeds->id, $insuranceNeeds->company_name, $templateData, $formattedDateCreated);
+                        $formattedDateCreatedOnly = $date_created->format("F j, Y");
+                        $this->sendInsuranceNeedsEmail($insuranceNeeds->id, $insuranceNeeds->company_name, $templateData, $formattedDateCreatedOnly);
                     } else {
                         Log::error('Doesnt saved insurance needs information');
                     }
@@ -269,10 +270,12 @@ class InsuranceNeedsController extends Controller
     }
 
     private function generatePdfReport($id) {
-        $insuranceNeedsInfo = InsuranceNeeds::select('*')->where('id', $id)->first();
-        $fullname = $insuranceNeedsInfo['firstname'] . ' ' . $insuranceNeedsInfo['lastname'];
-        $address = $insuranceNeedsInfo['address'] . ' ' . $insuranceNeedsInfo['city'] . ' ' . $insuranceNeedsInfo['state_id'] . ' ' . $insuranceNeedsInfo['zipcode'];
-        $dateCreated = $insuranceNeedsInfo['created_at'];
+        $insuranceNeedsModel = new InsuranceNeeds();
+        $insuranceNeedsInfo = $insuranceNeedsModel->select('*')->where('id', $id)->first();
+        $fullname = $insuranceNeedsInfo->firstname . ' ' . $insuranceNeedsInfo->lastname;
+        $statesname = $insuranceNeedsModel->getStatesById($insuranceNeedsInfo->state_id);
+        $address = $insuranceNeedsInfo->address . ' ' . $insuranceNeedsInfo->city . ' ' . $statesname . ' ' . $insuranceNeedsInfo->zipcode;
+        $dateCreated = $insuranceNeedsInfo->created_at;
         $date = Carbon::parse($dateCreated);
         $formattedDate = $date->format('F j, Y');
         $trades_ids = json_decode($insuranceNeedsInfo->trades_id, true);
@@ -297,19 +300,19 @@ class InsuranceNeedsController extends Controller
         $pdf->Cell(0, 0, $fullname, 0, 0, 'L', 0, 0, 0, false, '', '');
 
         $pdf->setXY($l, 53);
-        $pdf->Cell(0, 0, $insuranceNeedsInfo['company_name'], 0, 0, 'L', 0, 0, 0, false, '', '');
+        $pdf->Cell(0, 0, $insuranceNeedsInfo->company_name, 0, 0, 'L', 0, 0, 0, false, '', '');
 
         $pdf->setXY($l, 59);
         $pdf->Cell(0, 0, $address, 0, 0, 'L', 0, 0, 0, false, '', '');
 
         $pdf->setXY($l, 65);
-        $pdf->Cell(0, 0, $insuranceNeedsInfo['phone_no'], 0, 0, 'L', 0, 0, 0, false, '', '');
+        $pdf->Cell(0, 0, $insuranceNeedsInfo->phone_no, 0, 0, 'L', 0, 0, 0, false, '', '');
 
         $pdf->setXY($l, 80);
         $pdf->Cell(0, 0, 'Re: Contractors Insurance Needs Survey Report', 0, 0, 'L', 0, 0, 0, false, '', '');
 
         $pdf->setXY($l, 100);
-        $pdf->Cell(0, 0, 'Dear ' . $insuranceNeedsInfo['firstname'] . ', ', 0, 0, 'L', 0, 0, 0, false, '', '');
+        $pdf->Cell(0, 0, 'Dear ' . $insuranceNeedsInfo->firstname . ', ', 0, 0, 'L', 0, 0, 0, false, '', '');
 
         $html = "
             <div>Thank you for completing the Insurance Survey for the <b>“Contractors Insurance Needs Survey“</b>.</div>
@@ -341,7 +344,7 @@ class InsuranceNeedsController extends Controller
 
         $pdf->SetFont('helvetica', 'B', 14);
         $pdf->SetTextColor(255, 255, 255);
-        $pdf->Cell(0, 0, 'ABC Company', 0, 0, 'C', 0, 0, 0, false, 'C', 'M');
+        $pdf->Cell(0, 0, $insuranceNeedsInfo->company_name, 0, 0, 'C', 0, 0, 0, false, 'C', 'M');
 
         $pdf->SetFont('helvetica', 'B', 17);
         $pdf->SetTextColor(0, 0, 0);
@@ -393,7 +396,7 @@ class InsuranceNeedsController extends Controller
         // $footerWidth = $pdf->getFooterMargin();
         // $totalWidth = $fullWidth - $headerWidth - $footerWidth;
 
-        if ($insuranceNeedsInfo['does_perform_residential_work']) {
+        if ($insuranceNeedsInfo->does_perform_residential_work) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -413,7 +416,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='2. Do you perform any residential work?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_perform_commercial_work']) {
+        if ($insuranceNeedsInfo->does_perform_commercial_work) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -433,7 +436,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='3. Do you perform any commercial work?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_have_employee']){
+        if ($insuranceNeedsInfo->does_have_employee){
             $contents = [
                 [
                     'You answered "YES"',
@@ -453,7 +456,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='4. Do you have employees?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_use_vehicle_in_work']){
+        if ($insuranceNeedsInfo->does_use_vehicle_in_work){
             $contents = [
                 [
                     'You answered "YES"',
@@ -473,7 +476,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='5. Do you use a vehicle in your work?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_use_vehicle_in_work']) {
+        if ($insuranceNeedsInfo->does_use_vehicle_in_work) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -493,7 +496,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='6. Do your employees if any use their own vehicle for their work?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_work_property_above_1m']) {
+        if ($insuranceNeedsInfo->does_work_property_above_1m) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -513,7 +516,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='7. Do you work on property with a value greater than $1,000,000?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_rent_equipment_or_add_up_10k']) {
+        if ($insuranceNeedsInfo->does_rent_equipment_or_add_up_10k) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -533,7 +536,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='8. Do your tools and equipment add up to more than $10,000?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_rent_office_other_than_home']) {
+        if ($insuranceNeedsInfo->does_rent_office_other_than_home) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -553,7 +556,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='9. Do you own or rent an office, warehouse, or yard facility other than your home?', $contents);
         }
 
-        if ($insuranceNeedsInfo['are_you_gc_performs_remodeling']) {
+        if ($insuranceNeedsInfo->are_you_gc_performs_remodeling) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -573,7 +576,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='10. Are you a General Contractor that performs remodel, additions, or new ground up construction for residential or commercial building?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_transport_materials_above_10k']) {
+        if ($insuranceNeedsInfo->does_transport_materials_above_10k) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -593,7 +596,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='11. Do you transport materials, and or store them at your facility or jobsite, with a value greater than $10,000?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_perform_design_bldg_for_fee']) {
+        if ($insuranceNeedsInfo->does_perform_design_bldg_for_fee) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -613,7 +616,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='12. Do you perform any of the following services: Design Build, architectural, engineering services or construction management for a fee?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_your_website_collect_personal_info']) {
+        if ($insuranceNeedsInfo->does_your_website_collect_personal_info) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -633,7 +636,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='13. Do collect any personal information from your customers; credit card information, phone number, address, checking account, driver’s license, social security, date of birth?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_your_website_collect_personal_info']) {
+        if ($insuranceNeedsInfo->does_your_website_collect_personal_info) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -653,7 +656,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='14. Do you have a website that collects personal data from site visitors?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_store_transport_pollutants']) {
+        if ($insuranceNeedsInfo->does_store_transport_pollutants) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -673,7 +676,7 @@ class InsuranceNeedsController extends Controller
             $this->calculateQuestionsSection($pdf, $l=12, $title='15. Do you store, transport, or use on the jobsite any pollutants?', $contents);
         }
 
-        if ($insuranceNeedsInfo['does_use_subcontractors']) {
+        if ($insuranceNeedsInfo->does_use_subcontractors) {
             $contents = [
                 [
                     'You answered "YES"',
@@ -706,7 +709,7 @@ class InsuranceNeedsController extends Controller
         // Initialize dynamic page number
         $dynamicPageNo = 1;
 
-        if ($insuranceNeedsInfo->does_perform_residential_work != 0 || $insuranceNeedsInfo->does_perform_commercial_work != 0) {
+        if ($insuranceNeedsInfo->does_perform_residential_work || $insuranceNeedsInfo->does_perform_commercial_work) {
             $contents =
                 [
                     [
@@ -731,7 +734,7 @@ class InsuranceNeedsController extends Controller
             $dynamicPageNo++;
         }
 
-        if ($insuranceNeedsInfo->does_have_employee != 0) {
+        if ($insuranceNeedsInfo->does_have_employee) {
             $contents =
                 [
                     [
@@ -746,7 +749,7 @@ class InsuranceNeedsController extends Controller
             $dynamicPageNo++;
         }
 
-        if ($insuranceNeedsInfo->does_use_vehicle_in_work != 0) {
+        if ($insuranceNeedsInfo->does_use_vehicle_in_work) {
             $contents =
                 [
                     [
@@ -767,7 +770,7 @@ class InsuranceNeedsController extends Controller
             $dynamicPageNo++;
         }
 
-        if ($insuranceNeedsInfo->does_work_property_above_1m != 0) {
+        if ($insuranceNeedsInfo->does_work_property_above_1m) {
             $contents =
                 [
                     [
@@ -782,7 +785,7 @@ class InsuranceNeedsController extends Controller
             $dynamicPageNo++;
         }
 
-        if ($insuranceNeedsInfo->does_rent_equipment_or_add_up_10k != 0) {
+        if ($insuranceNeedsInfo->does_rent_equipment_or_add_up_10k) {
             $contents =
                 [
                     [
@@ -796,7 +799,7 @@ class InsuranceNeedsController extends Controller
             $dynamicPageNo++;
         }
 
-        if ($insuranceNeedsInfo->does_perform_design_bldg_for_fee != 0) {
+        if ($insuranceNeedsInfo->does_perform_design_bldg_for_fee) {
             $contents =
                 [
                     [
@@ -811,7 +814,7 @@ class InsuranceNeedsController extends Controller
             $dynamicPageNo++;
         }
 
-        if ($insuranceNeedsInfo->does_your_website_collect_personal_info != 0) {
+        if ($insuranceNeedsInfo->does_your_website_collect_personal_info) {
             $contents =
                 [
                     [
@@ -826,19 +829,6 @@ class InsuranceNeedsController extends Controller
             $dynamicPageNo++;
         }
 
-        $contents =
-            [
-                [
-                    'Limits of Liability' => [
-                        '$1,000,000 per Occurrence.',
-                        '$1,000,000 General Aggregate',
-                    ]
-                ],
-            ];
-
-        $this->calculateElSubconAgreement($pdf, $dynamicPageNo, $l, $title='Cyber Liability Insurance', $contents);
-        $dynamicPageNo++;
-
         // $contents =
         //     [
         //         [
@@ -851,7 +841,7 @@ class InsuranceNeedsController extends Controller
 
         // $this->calculateElSubconAgreement($pdf, $pageNo=8, $l, $title='Employment Practices Liability Insurance (EPLI)', $contents);
 
-        if ($insuranceNeedsInfo->does_store_transport_pollutants != 0) {
+        if ($insuranceNeedsInfo->does_store_transport_pollutants) {
             $contents =
                 [
                     [
@@ -866,7 +856,7 @@ class InsuranceNeedsController extends Controller
             $dynamicPageNo++;
         }
 
-        if ($insuranceNeedsInfo->does_use_subcontractors != 0) {
+        if ($insuranceNeedsInfo->does_use_subcontractors) {
             $contents =
                 [
                     [
@@ -946,17 +936,19 @@ class InsuranceNeedsController extends Controller
             File::makeDirectory($directory, 0777, true, true);
         }
 
-        $pdf->Output($directory.'/Insurance Needs Survey - '.$insuranceNeedsInfo->company_name.'.pdf', 'F');
+        $pdf->Output($directory.'/Insurance Needs Survey - ' . $insuranceNeedsInfo->company_name . ' - ' . $formattedDate . '.pdf', 'F');
         // $pdf->Output('insurance_survey.pdf', 'I');
     }
 
-    private function sendInsuranceNeedsEmail($id, $companyName, $templateData, $formattedDateCreated) {
-        $html_body = view('insurance-survey.email-template', $templateData)->render();
+    private function sendInsuranceNeedsEmail($id, $companyName, $templateData, $formattedDateCreatedOnly) {
+        $html_body = view('insurance-survey.new-email-template', $templateData)->render();
         // $apiKey = env('SMTP2GO_API_KEY');
         $apiKey = "api-B0CA3DC80C4711ED96EFF23C91C88F4E";
         // $base64 = chunk_split(base64_encode(file_get_contents(public_path('generated-pdfs/'.$id.'/*.pdf'))));
+        $base64 = ""; // Declare the variable here
 
-        $file_path = public_path('generated-pdfs/'.$id.'/Insurance Needs Survey - '.$companyName.'.pdf');
+
+        $file_path = public_path('generated-pdfs/'.$id.'/Insurance Needs Survey - '.trim($companyName).' - '. trim($formattedDateCreatedOnly).'.pdf');
 
         if (file_exists($file_path)) {
             $file_contents = file_get_contents($file_path);
@@ -994,10 +986,10 @@ class InsuranceNeedsController extends Controller
                 ],
                 "html_body" => $html_body,
                 "sender" => "PBIBINS Contractor Insurance Needs Survey Form <web@pbibinc.com>",
-                "subject" => "PBIBINS Contractor Insurance Needs Survey Form Details - {$formattedDateCreated}",
+                "subject" => "PBIBINS Contractor Insurance Needs Survey Form Details - {$formattedDateCreatedOnly}",
                 "attachments" => array(
                         0 => array(
-                            "filename" => 'Insurance Needs Survey - ' . $companyName . '.pdf',
+                            "filename" => 'Insurance Needs Survey - '.trim($companyName).' - '.trim($formattedDateCreatedOnly).'.pdf',
                             "fileblob" => $base64,
                             "mimetype" => "application/pdf"
                         )
@@ -1006,7 +998,8 @@ class InsuranceNeedsController extends Controller
                     "{$templateData['email']} <{$templateData['email']}>"
                 ],
                 "bcc" => [
-                    "insure@pbibinc.com"
+                    "insure@pbibinc.com",
+                    "bond@pbibinc.com"
                 ]
             ]),
             CURLOPT_HTTPHEADER => array(

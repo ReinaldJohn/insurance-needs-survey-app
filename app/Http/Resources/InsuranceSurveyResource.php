@@ -14,10 +14,30 @@ class InsuranceSurveyResource extends JsonResource
      */
     public function toArray($request)
     {
+        // Fetch additional data using model methods
+        $stateAbbr = $this->getStatesById($this->state_id);
+        // Assuming $this->trades_id is ["2","3","4"]
+        $tradesIds = json_decode($this->trades_id); // Convert the JSON array to a PHP array if needed
+
+        // Initialize an empty array to store the profession details
+        $professionDetails = [];
+
+        // Loop through each ID and call getProfessionById for each
+        foreach ($tradesIds as $id) {
+            $professionName = $this->getProfessionById($id);
+
+            // Check if a profession name was found and add it to the array
+            if ($professionName) {
+                $professionDetails[] = $professionName;
+            }
+        }
+
+        $utms = $this->getUTMSStatus($this->id);
+
         return [
             'id' => $this->id,
-            'state_id' => $this->state_id,
-            'trades_id' => $this->trades_id,
+            'state_id' => $stateAbbr,
+            'trades_id' => $professionDetails,
             'company_name' => $this->company_name,
             'firstname' => $this->firstname,
             'lastname' => $this->lastname,
@@ -41,6 +61,8 @@ class InsuranceSurveyResource extends JsonResource
             'does_store_transport_pollutants' => (bool) $this->does_store_transport_pollutants,
             'does_use_subcontractors' => (bool) $this->does_use_subcontractors,
             'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'utms' => $utms,
         ];
 
     }
