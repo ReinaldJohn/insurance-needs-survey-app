@@ -28,6 +28,7 @@ Route::prefix('v1')->group(function () {
 
 
     Route::post('/generate-api-key', [ApiController::class, 'storeApiKey'])->middleware('restrict_by_ip', 'throttle:1,1');
+    // Route::post('/generate-api-key', [ApiController::class, 'storeApiKey']);
 });
 
 

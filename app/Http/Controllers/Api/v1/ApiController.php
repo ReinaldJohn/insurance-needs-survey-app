@@ -12,7 +12,6 @@ use App\Models\InsuranceNeeds;
 use App\Http\Requests\PdfRequests;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\InsuranceSurveyResource;
 
 class ApiController extends Controller
