@@ -135,6 +135,58 @@
             },
         });
 
+    var isTermsChecked = false;
+    $("#process").css("cursor", "no-drop");
+    $("#termsCheckbox").on("change", function () {
+        isTermsChecked = $(this).is(":checked");
+        $("#process").css("cursor", isTermsChecked ? "pointer" : "no-drop");
+    });
+
+    var allowForward = false;
+    var declined = false;
+
+    $("#wizard_container").wizard({
+        afterForward: function () {
+            setInitialCursorState();
+        },
+        beforeForward: function (event, state) {
+            if (state.stepIndex === 2) {
+                if (!allowForward && !declined) {
+                    if ($("#dialpadTermsCheckbox").is(":checked")) {
+                        allowForward = true;
+                        $(".forward").css("cursor", "");
+                    } else {
+                        $(".forward").css("cursor", "no-drop");
+                        toastr.info(
+                            "You must accept the agreements before proceeding."
+                        );
+                        return false;
+                    }
+                } else if (declined) {
+                    toastr.info(
+                        "You must refresh the page again to agree to the terms and agreements."
+                    );
+                    return false;
+                }
+            } else {
+                allowForward = false;
+                $(".forward").css("cursor", "");
+            }
+            return true;
+        },
+    });
+
+    $("#dialpadTermsCheckbox").change(function () {
+        if ($(this).is(":checked")) {
+            allowForward = true;
+            $(".forward").css("cursor", "");
+        } else {
+            allowForward = false;
+            $(".forward").css("cursor", "no-drop");
+            toastr.info("You must accept the agreements before proceeding.");
+        }
+    });
+
     //  progress bar
     $("#progressbar").progressbar();
     $("#wizard_container").wizard({

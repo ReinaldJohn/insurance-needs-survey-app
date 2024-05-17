@@ -18,7 +18,13 @@ class InsuranceNeedsController extends Controller
         $insuranceNeedsModel = new InsuranceNeeds();
         $states = $insuranceNeedsModel->getAllStates();
         $professions = $insuranceNeedsModel->getAllProfessions();
-        return view('insurance-survey.index', compact('states', 'professions'));
+        $currentYear = $this->globalCurrentYear();
+        return view('insurance-survey.index', [
+            'states' => $states,
+            'professions' => $professions,
+            'currentYear' => $currentYear,
+            'title' => "Contractors' Insurance Survey | Pascal Burke Insurance Brokerage Inc."
+        ]);
     }
 
     public function thankYouPage() {
@@ -1010,5 +1016,50 @@ class InsuranceNeedsController extends Controller
         $response = json_decode($response, true);
         curl_close($curl);
         Log::info('SMTP2GO Response:', $response);
+    }
+
+    public function globalCurrentYear() {
+        return Carbon::now()->format('Y');
+    }
+
+    public function acceptablePolicy() {
+        $currentYear = $this->globalCurrentYear();
+        return view("acceptable-policy.index",  [
+            'currentYear' => $currentYear,
+            'trueValues' => null,
+            'title' => 'Acceptable Use Policy | Pascal Burke Insurance Brokerage'
+        ]);
+    }
+
+    public function disclaimer() {
+        $currentYear = $this->globalCurrentYear();
+        return view("disclaimer.index",  [
+            'currentYear' => $currentYear,
+            'title' => 'Disclaimer | Pascal Burke Insurance Brokerage'
+        ]);
+    }
+
+    public function termsAndCondition() {
+        $currentYear = $this->globalCurrentYear();
+        return view("terms-and-conditions.index",  [
+            'currentYear' => $currentYear,
+            'title' => 'Terms and Conditions | Pascal Burke Insurance Brokerage'
+        ]);
+    }
+
+    public function privacyPolicy() {
+        $currentYear = $this->globalCurrentYear();
+        return view("privacy-policy.index",  [
+            'currentYear' => $currentYear,
+            'title' => 'Privacy Policy | Pascal Burke Insurance Brokerage'
+        ]);
+    }
+
+    public function cookiePolicy() {
+        $currentYear = $this->globalCurrentYear();
+        return view("cookie-policy.index",  [
+            'currentYear' => $currentYear,
+            'title' => 'Cookie Policy | Pascal Burke Insurance Brokerage'
+        ]);
     }
 }

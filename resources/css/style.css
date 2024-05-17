@@ -938,8 +938,6 @@ ul.contacts_info li:last-child {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    margin: 0 auto; /* This will center the label if it has a specified width */
-    width: fit-content; /* This makes the width of the element as wide as its content */
 }
 .container_check input {
     position: absolute;

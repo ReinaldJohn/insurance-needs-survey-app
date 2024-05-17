@@ -2,15 +2,15 @@
 /* Your custom styles below */
 /*============================================================================================*/
 
-.terms {
-    display: block; /* This should already be set since div is a block-level element */
+/* .terms {
+    display: block;
     margin-left: auto;
     margin-right: auto;
-    width: 50%; /* Or whatever width you desire */
+    width: 50%;
 }
 
 @media (min-width: 320px) and (max-width: 480px) {
     .terms {
         width: 100%;
     }
-}
+} */
