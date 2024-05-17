@@ -12,6 +12,8 @@ use App\Models\InsuranceNeeds;
 use App\Http\Requests\PdfRequests;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\InsuranceSurveyResource;
 
 class ApiController extends Controller
@@ -319,7 +321,7 @@ class ApiController extends Controller
 
         // Process the validated data and generate the PDF report
         $id = $data['id'];
-
+        // $encryptedId = Crypt::encrypt(id);
         // $state_id = $data['state_id'];
         $trades_performed = $data['trades_performed'];
         $company = $data['company'];
